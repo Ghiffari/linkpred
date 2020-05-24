@@ -85,12 +85,16 @@ nl3.head()
 # save to csv if needed to easier importingdata
 # nl3.to_csv('directory/preferential.csv',index=False)
 
-#new visualization
-df_rand = df_neww.sample(60)
+# select random 50 from jaccard nodes 
+df_new = pd.read_csv("directory/jaccard.csv")
+df_neww = df_new.drop_duplicates(subset = ["caleg1"])
+df_neww.head()
+
+df_rand = df_neww.sample(50)
 nl = []
 for i in df_rand['caleg1']:
     nl.append(i)
-
+    
 final_df = df[df['nama'].isin(nl)]
 new_df = final_df.drop_duplicates(subset = ["nama"])
 g = nx.from_pandas_edgelist(new_df, source='nama', target='dapil') 
@@ -99,7 +103,19 @@ mylist = new_df2.values.tolist()
 g.add_edges_from(mylist,label="partai")
 labels = [i for i in dict(g.nodes).keys()]
 labels = {i:i for i in dict(g.nodes).keys()}
+preds = nx.adamic_adar_index(g)
 
+# preferential algorithm
+# preds = nx.preferential_attachment(g)
+count = 0
+new_nodes = []
+for u, v, p in preds:
+    if(p > 0):
+        count+= 1
+        dicts = {'caleg1' : u,'caleg2': v, 'score' : p}
+        new_nodes.append(dicts)
+nl = pd.DataFrame(new_nodes)
+#new visualization
 fig, ax = plt.subplots(figsize=(30,15))
 layout = nx.spring_layout(g,iterations=50)
 nx.draw_networkx_nodes(g, layout, ax = ax, labels=True)
